@@ -14,6 +14,7 @@ import com.limajuice.liftlog.Weight
 import com.limajuice.liftlog.WeightUnit
 import com.limajuice.liftlog.WorkoutMessage
 import com.limajuice.liftlog.WorkoutUpdatedEvent
+import expo.modules.workoutworker.utils.PowerampController
 import expo.modules.workoutworker.utils.RepeatingTimerAction
 import expo.modules.workoutworker.utils.RestWindow
 import expo.modules.workoutworker.utils.WorkoutNotificationManager
@@ -65,6 +66,7 @@ class WorkoutUpdatedHandler(
     private fun showFinishedNotification(translations: Translations, event: WorkoutUpdatedEvent) {
         // We should not be in a timer anymore
         timer.stop()
+        PowerampController.onRestEnded(notificationManager.context)
 
         val messageTemplate: String =
             translations.workoutPersistentNotificationFinishedMessage
@@ -82,6 +84,7 @@ class WorkoutUpdatedHandler(
     private fun showCurrentExerciseNotification(translations: Translations, event: WorkoutUpdatedEvent) {
         // We should not be in a timer anymore
         timer.stop()
+        PowerampController.onRestEnded(notificationManager.context)
 
         // The collapsed pill and the always-on-display outline only surface the title and the short
         // critical text, not the content text - so the exercise goes in the title and its target in
@@ -102,6 +105,7 @@ class WorkoutUpdatedHandler(
     ) {
 
         val restTimerInfo = workoutUpdatedEvent.restTimerInfo ?:return
+        PowerampController.onRestStarted(notificationManager.context)
         fun getProgress(): Long {
             val timeStartSecs = restTimerInfo.startedAt.epochSeconds
             val now = Clock.System.now().epochSeconds
@@ -126,13 +130,19 @@ class WorkoutUpdatedHandler(
 
 
             val restNotif: Notification? = when {
-                partialProgressMax in (previousProgress + 1)..progress && partialProgressMax != 0L -> notificationManager.createRestNotificationBuilder()
-                    .setContentTitle(translations.workoutPersistentNotificationMinRestOverMessage)
-                    .build()
+                partialProgressMax in (previousProgress + 1)..progress && partialProgressMax != 0L -> {
+                    PowerampController.onRestEnded(notificationManager.context)
+                    notificationManager.createRestNotificationBuilder()
+                        .setContentTitle(translations.workoutPersistentNotificationMinRestOverMessage)
+                        .build()
+                }
 
-                fullProgressMax in (previousProgress + 1)..progress && fullProgressMax != 0L -> notificationManager.createRestNotificationBuilder()
-                    .setContentTitle(translations.workoutPersistentNotificationMaxRestOverMessage)
-                    .build()
+                fullProgressMax in (previousProgress + 1)..progress && fullProgressMax != 0L -> {
+                    PowerampController.onRestEnded(notificationManager.context)
+                    notificationManager.createRestNotificationBuilder()
+                        .setContentTitle(translations.workoutPersistentNotificationMaxRestOverMessage)
+                        .build()
+                }
 
                 else -> null
             }

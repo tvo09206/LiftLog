@@ -3,6 +3,7 @@ package expo.modules.workoutworker.handlers
 
 import com.limajuice.liftlog.WorkoutEndedEvent
 import com.limajuice.liftlog.WorkoutMessage
+import expo.modules.workoutworker.utils.PowerampController
 import expo.modules.workoutworker.utils.WorkoutNotificationManager
 
 
@@ -18,6 +19,7 @@ class WorkoutEndedHandler(
         dispatch: (type: String, event: WorkoutMessage) -> Unit
     ) {
         notificationManager.clearPersistentNotification()
+        PowerampController.onRestEnded(notificationManager.context)
     }
 
 }

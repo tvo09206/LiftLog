@@ -29,7 +29,7 @@ enum class RestWindow(@DrawableRes val icon: Int) {
 }
 
 
-class WorkoutNotificationManager(private val context: Context) {
+class WorkoutNotificationManager(val context: Context) {
 
     companion object {
         const val PERSISTENT_NOTIFICATION_ID = 123
