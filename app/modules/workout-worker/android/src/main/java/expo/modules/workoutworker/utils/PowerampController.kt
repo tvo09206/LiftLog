@@ -84,9 +84,15 @@ object PowerampController {
                 addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
             }
             context.sendBroadcast(intent)
-            Log.d(TAG, "Broadcast sent to Poweramp: play playlist ID $playlistId")
+            try {
+                context.startService(intent)
+            } catch (_: Exception) {
+                // startService might be restricted in background on Android 12+, sendBroadcast is standard
+            }
+            Log.d(TAG, "Command sent to Poweramp: play playlist ID $playlistId")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to send Poweramp broadcast", e)
+            Log.e(TAG, "Failed to send Poweramp command", e)
         }
     }
 }
+
