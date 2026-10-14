@@ -78,19 +78,26 @@ export function applySettingsEffects(addEffect: AddEffectFn) {
       const proToken = await preferenceService.getProToken();
       dispatch(setProToken(proToken));
 
+      const googleApiKey = process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY;
+      const appleApiKey = process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY;
+
       if (!__DEV__) {
-        if (Platform.OS === 'ios') {
-          Purchases.configure({
-            apiKey: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY!,
-          });
-        } else if (Platform.OS === 'android') {
-          Purchases.configure({
-            apiKey: process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY!,
-          });
+        try {
+          if (Platform.OS === 'ios' && appleApiKey) {
+            Purchases.configure({
+              apiKey: appleApiKey,
+            });
+          } else if (Platform.OS === 'android' && googleApiKey) {
+            Purchases.configure({
+              apiKey: googleApiKey,
+            });
+          }
+        } catch (err) {
+          logger.error('Failed to configure Purchases', err);
         }
       }
       // migrate pro token to a revenuecat
-      if (proToken && !proToken.startsWith('$RCAnonymousID')) {
+      if (proToken && !proToken.startsWith('$RCAnonymousID') && (googleApiKey || appleApiKey)) {
         try {
           const customerInfo = await Purchases.getCustomerInfo();
           await Purchases.syncPurchases();
@@ -100,6 +107,7 @@ export function applySettingsEffects(addEffect: AddEffectFn) {
           logger.error('Failed to migrate user', err);
         }
       }
+
       dispatch(setIsHydrated(true));
       dispatch(initializeStoredSessionsStateSlice());
       const end = performance.now();
